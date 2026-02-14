@@ -38,10 +38,15 @@ const Layout = () => {
 
             {/* Sidebar */}
             <div className={`fixed inset-y-0 left-0 z-30 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 no-print ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-                <div className="flex items-center justify-between h-16 px-6 bg-blue-600 text-white">
-                    <span className="text-xl font-bold">Vighnaharta</span>
-                    <button className="lg:hidden" onClick={() => setSidebarOpen(false)}>
-                        X
+                <div className="flex flex-col items-center justify-center py-6 bg-blue-900 text-white relative">
+                    <img
+                        src="/logo.jpeg"
+                        alt="Logo"
+                        className="w-20 h-20 mb-3 bg-white rounded-full p-1 object-contain"
+                    />
+                    <span className="text-xl font-bold text-center">Vighnaharta<br />Multiservices</span>
+                    <button className="lg:hidden absolute top-4 right-4 text-white hover:text-gray-200" onClick={() => setSidebarOpen(false)}>
+                        ✕
                     </button>
                 </div>
                 <nav className="p-4 space-y-2">
