@@ -363,6 +363,7 @@ const WorkEnquiry = () => {
                                 </div>
 
                                 {/* 3. Account Selection */}
+                                {/* 3. Account Selection */}
                                 <div className="grid grid-cols-2 gap-4">
                                     {(activeTab === 'service_income' || activeTab === 'deposit') && (
                                         <div className="col-span-1">
@@ -378,6 +379,18 @@ const WorkEnquiry = () => {
                                                     <option key={acc.id} value={acc.id}>{acc.account_name} ({acc.type.replace(/_/g, ' ').toUpperCase()})</option>
                                                 ))}
                                             </select>
+                                            {/* Low Balance Warning for Inward Account */}
+                                            {formData.inward_account_id && (() => {
+                                                const acc = accounts.find(a => a.id == formData.inward_account_id);
+                                                if (acc && parseFloat(acc.balance) < parseFloat(acc.low_balance_threshold)) {
+                                                    return (
+                                                        <div className="text-xs text-red-600 font-bold mt-1 animate-pulse">
+                                                            ⚠️ Low Balance Alert: ₹{acc.balance}
+                                                        </div>
+                                                    );
+                                                }
+                                                return null;
+                                            })()}
                                         </div>
                                     )}
 
@@ -395,6 +408,18 @@ const WorkEnquiry = () => {
                                                     <option key={acc.id} value={acc.id}>{acc.account_name} ({acc.type.replace(/_/g, ' ').toUpperCase()})</option>
                                                 ))}
                                             </select>
+                                            {/* Low Balance Warning for Outward Account */}
+                                            {formData.outward_account_id && (() => {
+                                                const acc = accounts.find(a => a.id == formData.outward_account_id);
+                                                if (acc && parseFloat(acc.balance) < parseFloat(acc.low_balance_threshold)) {
+                                                    return (
+                                                        <div className="text-xs text-red-600 font-bold mt-1 animate-pulse">
+                                                            ⚠️ Low Balance Alert: ₹{acc.balance}
+                                                        </div>
+                                                    );
+                                                }
+                                                return null;
+                                            })()}
                                         </div>
                                     )}
                                 </div>
