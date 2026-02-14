@@ -13,31 +13,31 @@ A comprehensive Cash Management System (CMS) for multiservice centers/cyber cafe
 - Node.js (v14+)
 - PostgreSQL Server
 
-## Installation
+## Installation (Local Development)
 
-1. **Database Setup**
-   - Ensure PostgreSQL is running.
-   - Create a database named `vighnaharta_db`.
-   - Update `server/.env` with your Postgres credentials (DB_USER, DB_PASSWORD).
-   - Run the initialization script: `node server/src/initDb.js`.
+1. **Clone the repository**
+   ```bash
+   git clone <your-repo-url>
+   cd Dashboard
+   ```
 
-2. **Backend Setup**
+2. **Setup Server**
    ```bash
    cd server
    npm install
-   # Create initial admin
-   node src/createAdmin.js
-   # Start server
+   # Create .env file with your database credentials (see DEPLOY_ONLINE.md for Supabase setup)
    npm run dev
    ```
 
-3. **Frontend Setup**
+3. **Setup Client**
    ```bash
    cd client
    npm install
-   # Start client
    npm run dev
    ```
+
+## Deployment
+For detailed instructions on how to deploy this app online using **Render + Netlify + Supabase**, please read [DEPLOY_ONLINE.md](./DEPLOY_ONLINE.md).
 
 ## Default Login
 - **Username**: `admin`

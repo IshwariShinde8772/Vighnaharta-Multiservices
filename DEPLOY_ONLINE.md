@@ -1,42 +1,60 @@
-# Deploy to Vercel (Online)
-===========================
+# Deploy Online (Render + Netlify + Supabase)
+=============================================
 
-To host this on Vercel with your domain, you need 2 things:
-1. **GitHub Account:** To store your code.
-2. **Neon.tech Account:** For your Database (Postgres).
-3. **Vercel Account:** For hosting.
+This guide explains how to deploy your **Dashboard App** online for free using the modern stack:
+1.  **Database**: Supabase (PostgreSQL)
+2.  **Backend**: Render (Node.js/Express)
+3.  **Frontend**: Netlify (React/Vite)
 
-## STEP 1: Setup Cloud Database (Neon)
-1. Go to **[neon.tech](https://neon.tech)** and create a free account.
-2. Create a Project named `Vighnaharta`.
-3. It will give you a **Connection String** (e.g. `postgres://user:pass@ep-rest-123.aws.neon.tech/neondb...`).
-   **SAVE THIS STRING!** You will need it.
-4. Go to the SQL Editor in Neon and paste the contents of `server/schema.sql` to create your tables in the cloud.
+## Step 1: Database Setup (Supabase)
+1.  Go to **[supabase.com](https://supabase.com)** and create a free project.
+2.  Go to **Project Settings > Database**.
+3.  **Connection String**:
+    *   Click on "Connection Pooling" (Transaction/Session Pooler).
+    *   **Mode**: Session
+    *   **Copy the URL**: It should look like `postgres://[user]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres`.
+4.  **SQL Editor**:
+    *   Open `server/schema.sql` from your project.
+    *   Paste its content into the Supabase SQL Editor and run it to create your tables.
 
-## STEP 2: Push Code to GitHub
-1. Create a repository on GitHub (e.g. `dashboard-app`).
-2. Upload all files from this folder to GitHub.
-   (Use `git init`, `git add .`, `git commit -m "initial"`, `git branch -M main`, `git remote add origin ...`, `git push -u origin main`).
+## Step 2: Push Code to GitHub
+1.  Create a repository on GitHub (e.g. `dashboard-app`).
+2.  Push your code:
+    ```bash
+    git init
+    git add .
+    git commit -m "Ready for deploy"
+    git branch -M main
+    git remote add origin https://github.com/YOUR_USER/YOUR_REPO.git
+    git push -u origin main
+    ```
 
-## STEP 3: Deploy on Vercel
-1. Go to **[vercel.com](https://vercel.com)** and login with GitHub.
-2. Click **"Add New..."** -> **Project**.
-3. Import your `dashboard-app` repository.
-4. **Configure Project:**
-   - **Framework Preset:** Vite
-   - **Root Directory:** `client` (Click Edit regarding "Root Directory" and select `client` folder).
-   - *Wait!* Actually, keep Root Directory as `./` (Main folder). Vercel will auto-detect settings from `vercel.json` if we set it up correctly. 
-   - **Environment Variables:** Add the following:
-     - `DATABASE_URL`: Your Neon Connection String from Step 1.
-     - `JWT_SECRET`: `vighnaharta_secret_key_2025` (or any secret).
+## Step 3: Backend Deployment (Render)
+1.  Go to **[render.com](https://render.com)** and create a **Web Service**.
+2.  Connect your GitHub repository.
+3.  **Settings**:
+    *   **Root Directory**: `server`
+    *   **Build Command**: `npm install`
+    *   **Start Command**: `node src/server.js`
+4.  **Environment Variables**:
+    *   `DATABASE_URL`: Paste your Supabase Connection Pooling URL (from Step 1).
+    *   `JWT_SECRET`: `vighnaharta_secret_key_2025` (or your own secret).
+    *   `PORT`: `10000` (Render default).
+5.  Click **Deploy**.
+6.  **Copy URL**: Once deployed, copy the service URL (e.g., `https://my-api.onrender.com`).
 
-5. Click **Deploy**.
+## Step 4: Frontend Deployment (Netlify)
+1.  Go to **[netlify.com](https://netlify.com)** and "Add new site" > "Import from GitHub".
+2.  Select your repository.
+3.  **Build Settings**:
+    *   **Base Directory**: `client`
+    *   **Build Command**: `npm run build`
+    *   **Publish Directory**: `client/dist` (Netlify might default to `dist`, ensure it points to the output).
+4.  **Environment Variables**:
+    *   `VITE_API_URL`: Paste your Render Backend URL (e.g., `https://my-api.onrender.com`).
+5.  Click **Deploy**.
 
 ## Troubleshooting
-- If Vercel build fails for `client`, ensure `npm install` runs in `client` folder.
-- If Database connection fails, double check the `DATABASE_URL` in Vercel settings under **Settings > Environment Variables**.
+- **Database Error?** Ensure you are using the **Connection Pooling URL** (port 6543) from Supabase, not the direct IPv6 one.
+- **Frontend not loading data?** Check the Console (F12). If you see CORS errors, ensure your Backend (server.js) allows the Netlify domain (it currently allows all with `cors()`).
 
-## Connecting Domain
-1. Once deployed, go to **Settings > Domains**.
-2. Add your domain (e.g. `mydashboard.com`).
-3. Follow the DNS instructions (usually adding an A record or CNAME).
