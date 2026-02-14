@@ -120,7 +120,7 @@ const Accounts = () => {
 
         // 1. Auto Export (Safety)
         // We reuse the basic export logic but filtered for this account
-        const headers = ['Date', 'Description', 'Type', 'Amount', 'Payment Mode'];
+        const headers = ['Date', 'Description', 'Type', 'Amount', 'Payment Mode', 'Admin'];
         const csvContent = [
             headers.join(','),
             ...accountTransactions.map(t => [
@@ -128,7 +128,8 @@ const Accounts = () => {
                 `"${t.description || t.category || '-'}"`,
                 t.type,
                 t.amount,
-                t.payment_mode
+                t.payment_mode,
+                t.created_by || 'admin'
             ].join(','))
         ].join('\n');
 
@@ -440,6 +441,7 @@ const Accounts = () => {
                                             <th className="p-3">Date</th>
                                             <th className="p-3">Description</th>
                                             <th className="p-3">Type</th>
+                                            <th className="p-3">Admin</th>
                                             <th className="p-3 text-right">Amount</th>
                                             {['cash', 'petty_cash'].includes(selectedAccount.type) && (
                                                 <th className="p-3">Notes</th>
@@ -448,7 +450,7 @@ const Accounts = () => {
                                     </thead>
                                     <tbody className="divide-y divide-gray-100 text-sm">
                                         {loadingTxns ? (
-                                            <tr><td colSpan="5" className="p-4 text-center">Loading...</td></tr>
+                                            <tr><td colSpan="6" className="p-4 text-center">Loading...</td></tr>
                                         ) : accountTransactions.length > 0 ? (
                                             accountTransactions.map(txn => {
                                                 const isCredit = txn.inward_account_id == selectedAccount.id;
@@ -467,6 +469,9 @@ const Accounts = () => {
                                                                 <span className="uppercase">{isCredit ? 'Credit' : 'Debit'}</span>
                                                             </span>
                                                         </td>
+                                                        <td className="p-3 text-xs text-gray-600 capitalize">
+                                                            {txn.created_by || '-'}
+                                                        </td>
                                                         <td className={`p-3 text-right font-bold ${isCredit ? 'text-green-700' : 'text-red-700'}`}>
                                                             {isCredit ? '+' : '-'}₹{txn.amount}
                                                         </td>
@@ -479,7 +484,7 @@ const Accounts = () => {
                                                 );
                                             })
                                         ) : (
-                                            <tr><td colSpan="5" className="p-4 text-center text-gray-500">No transactions found.</td></tr>
+                                            <tr><td colSpan="6" className="p-4 text-center text-gray-500">No transactions found.</td></tr>
                                         )}
                                     </tbody>
                                 </table>

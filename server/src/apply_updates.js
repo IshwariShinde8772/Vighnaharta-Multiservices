@@ -57,6 +57,12 @@ async function applyUpdates() {
             ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
         `);
 
+        // 6. Add created_by to transactions (for Admin Tracking)
+        await pool.query(`
+            ALTER TABLE transactions 
+            ADD COLUMN IF NOT EXISTS created_by VARCHAR(50);
+        `);
+
         console.log('Database schema updated successfully.');
 
         console.log('Updates applied successfully.');

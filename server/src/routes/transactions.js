@@ -77,8 +77,9 @@ router.post('/', async (req, res) => {
             status = is_urgent ? 'completed' : (req.body.status || 'completed'),
             inward_account_id,
             outward_account_id,
-            inward_denominations = {}, // New: { "500": 1, ... }
-            outward_denominations = {} // New: { "100": 3, ... }
+            inward_denominations = {},
+            outward_denominations = {},
+            created_by = 'admin' // New: Track which admin created this
         } = req.body;
 
         const profit = (selling_price - cost_price) || 0;
@@ -101,13 +102,14 @@ router.post('/', async (req, res) => {
             `INSERT INTO transactions 
       (type, category, amount, cost_price, selling_price, profit, description, client_name, client_phone, payment_mode,
        service_charges, total_amount, status, is_urgent, inward_account_id, outward_account_id,
-       inward_denominations, outward_denominations)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) RETURNING id`,
+       inward_denominations, outward_denominations, created_by)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19) RETURNING id`,
             [
                 type, category, amount, cost_price, selling_price, profit, description, client_name, client_phone, payment_mode,
                 service_charges, total_amount, status, is_urgent, inward_account_id, outward_account_id,
                 JSON.stringify(inward_denominations),
-                JSON.stringify(outward_denominations)
+                JSON.stringify(outward_denominations),
+                created_by
             ]
         );
 

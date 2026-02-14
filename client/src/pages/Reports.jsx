@@ -72,7 +72,7 @@ const Reports = () => {
     }, 0);
 
     const handleExport = () => {
-        const headers = ['ID', 'Date', 'Type', 'Category', 'Client', 'Total Amount', 'Charges', 'Mode', 'Status'];
+        const headers = ['ID', 'Date', 'Type', 'Category', 'Client', 'Total Amount', 'Charges', 'Mode', 'Admin', 'Status'];
         const csvContent = [
             headers.join(','),
             ...transactions.map(t => [
@@ -84,6 +84,7 @@ const Reports = () => {
                 t.total_amount || t.amount,
                 t.type === 'service_income' ? t.service_charges : 0,
                 t.payment_mode,
+                t.created_by || '-',
                 t.status
             ].join(','))
         ].join('\n');
@@ -258,15 +259,16 @@ const Reports = () => {
                                 <th className="px-6 py-3">Client</th>
                                 <th className="px-6 py-3">Status</th>
                                 <th className="px-6 py-3">Payment</th>
+                                <th className="px-6 py-3">Admin</th>
                                 <th className="px-6 py-3 text-right">Total Amount</th>
                                 <th className="px-6 py-3 text-right">Charges</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan="8" className="text-center py-4">Loading...</td></tr>
+                                <tr><td colSpan="9" className="text-center py-4">Loading...</td></tr>
                             ) : transactions.length === 0 ? (
-                                <tr><td colSpan="8" className="text-center py-4 text-gray-500">No transactions found</td></tr>
+                                <tr><td colSpan="9" className="text-center py-4 text-gray-500">No transactions found</td></tr>
                             ) : (
                                 transactions.map((t) => (
                                     <tr key={t.id} className="bg-white border-b hover:bg-gray-50">
@@ -295,6 +297,7 @@ const Reports = () => {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 capitalize">{t.payment_mode}</td>
+                                        <td className="px-6 py-4 capitalize text-gray-600">{t.created_by || '-'}</td>
                                         <td className="px-6 py-4 text-right font-bold">
                                             ₹{t.total_amount || t.amount}
                                         </td>
@@ -307,7 +310,7 @@ const Reports = () => {
                         </tbody>
                         <tfoot className="bg-gray-100 font-bold text-gray-900">
                             <tr>
-                                <td colSpan="6" className="px-6 py-4 text-right">Total:</td>
+                                <td colSpan="7" className="px-6 py-4 text-right">Total:</td>
                                 <td className="px-6 py-4 text-right">₹{totalAmount.toFixed(2)}</td>
                                 <td className="px-6 py-4 text-right">₹{totalCharges.toFixed(2)}</td>
                             </tr>

@@ -177,6 +177,9 @@ const WorkEnquiry = () => {
 
                 // Legacy support (optional, can send if backend expects 'notes')
                 notes: ((activeTab === 'service_income' && formData.payment_mode === 'cash') || activeTab !== 'service_income') ? notes : {},
+
+                // Add Admin Username
+                created_by: JSON.parse(localStorage.getItem('user'))?.username || 'admin',
             };
 
             // Adjust logic for Deposit/Withdraw specific mapping
