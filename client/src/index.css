@@ -3,38 +3,72 @@
 @tailwind utilities;
 
 @media print {
-  .no-print {
-    display: none !important;
+  @page {
+    size: landscape;
+    margin: 10mm;
   }
 
-  body {
-    background: white;
+  /* Hide everything by default, then show specific content */
+  body * {
+    visibility: hidden;
   }
 
-  /* Hide Sidebar (assuming it's a sibling in Layout or has a specific class/structure we can target generically if we don't know the class) */
-  /* If Sidebar is fixed, we might need to hide it explicitly. Since I don't see Sidebar class in Layout View, I'll assume I can add 'no-print' class to it in Layout.jsx code, OR I target broadly. */
+  /* Show the main content area */
+  #root,
+  #root * {
+    visibility: visible;
+  }
+
+  /* Hide specific UI elements strictly */
+  .no-print,
   aside,
   nav,
+  header,
   button,
-  input,
-  select {
+  .sidebar,
+  .mobile-menu-overlay {
     display: none !important;
   }
 
-  .print-only-visible {
+  /* Reset layout for printing */
+  body,
+  #root,
+  .flex,
+  .h-screen {
     display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: white !important;
   }
 
-  /* Ensure table fits */
-  table {
-    width: 100%;
-    font-size: 12px;
-  }
-
-  /* Adjust main content margin if Sidebar was shifting it */
+  /* Ensure main content takes full width */
   main {
-    margin-left: 0 !important;
+    margin: 0 !important;
     padding: 0 !important;
+    width: 100% !important;
+    position: static !important;
+  }
+
+  /* Table styling for print */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 10px !important;
+    /* Smaller font to fit columns */
+  }
+
+  th,
+  td {
+    padding: 4px !important;
+    border: 1px solid #ccc !important;
+    white-space: normal !important;
+    /* Allow text wrapping */
+  }
+
+  /* Force background colors */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 }
 
