@@ -14,6 +14,8 @@ import {
 } from 'recharts';
 import StatCard from '../components/StatCard';
 
+const NOTE_DENOMINATIONS = [2000, 500, 200, 100, 50, 20, 10, 5, 2, 1];
+
 const Dashboard = () => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -63,8 +65,6 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Cash & Profit Summary Section - New Layout requested by user */}
-
             {/* 1. Global Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <StatCard
@@ -91,12 +91,12 @@ const Dashboard = () => {
                 />
             </div>
 
-            {/* 2. Daily Cash Tally (New Format Request) */}
+            {/* 2. Daily Cash Tally Table */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-bold text-gray-800">DAILY CASH TALLY</h3>
                     <div className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-bold">
-                        Cash Present: ₹{data?.cashStats?.totalCashInHand || 0}
+                        Cash Present: ₹{data?.cashStats?.totalCashInHand?.toLocaleString('en-IN') || 0}
                     </div>
                 </div>
 
@@ -107,37 +107,39 @@ const Dashboard = () => {
                                 <th className="px-4 py-3 border-b">Note Type</th>
                                 <th className="px-4 py-3 border-b text-center text-green-700 bg-green-50">Cash In (Count)</th>
                                 <th className="px-4 py-3 border-b text-center text-red-700 bg-red-50">Cash Out (Count)</th>
-                                <th className="px-4 py-3 border-b text-center font-bold">Total (Net Value)</th>
+                                <th className="px-4 py-3 border-b text-center font-bold text-blue-700 bg-blue-50">In Hand (Count)</th>
+                                <th className="px-4 py-3 border-b text-center font-bold">Net Value (₹)</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {[2000, 500, 200, 100, 50, 20, 10, 5, 2, 1].map(denom => {
+                            {NOTE_DENOMINATIONS.map(denom => {
                                 const inCount = data?.cashStats?.todayInward?.denominations?.[denom] || 0;
                                 const outCount = data?.cashStats?.todayOutward?.denominations?.[denom] || 0;
-                                const netVal = (inCount * denom) - (outCount * denom);
-
-                                // Show row if there is ANY activity or if it's a common note
-                                // Actually user wants "exact table" usually implies all rows. 
-                                // We'll show all main notes.
+                                const inHandCount = data?.cashStats?.totalCashCounts?.[denom] || 0;
+                                const netVal = inHandCount * denom;
 
                                 return (
                                     <tr key={denom} className="border-b hover:bg-gray-50">
                                         <td className="px-4 py-2 font-bold text-gray-700">₹{denom}</td>
 
-                                        {/* IN */}
+                                        {/* IN (today's transactions) */}
                                         <td className="px-4 py-2 text-center bg-green-50/30">
                                             {inCount > 0 ? <span className="font-bold text-green-700">{inCount}</span> : '-'}
                                         </td>
 
-                                        {/* OUT */}
+                                        {/* OUT (today's transactions) */}
                                         <td className="px-4 py-2 text-center bg-red-50/30">
                                             {outCount > 0 ? <span className="font-bold text-red-700">{outCount}</span> : '-'}
                                         </td>
 
-                                        {/* TOTAL (Net for this note type today) */}
-                                        {/* Note: User asked for "Total" column. Could be Count or Value. Value makes more sense for balancing. */}
-                                        <td className={`px-4 py-2 text-center font-bold ${netVal >= 0 ? 'text-blue-600' : 'text-red-700'}`}>
-                                            {netVal !== 0 ? `₹${Math.abs(netVal)}` : '-'}
+                                        {/* IN HAND (from account denominations – actual physical cash now) */}
+                                        <td className="px-4 py-2 text-center bg-blue-50/30">
+                                            {inHandCount > 0 ? <span className="font-bold text-blue-700">{inHandCount}</span> : '-'}
+                                        </td>
+
+                                        {/* Net Value of notes in hand */}
+                                        <td className={`px-4 py-2 text-center font-bold ${netVal > 0 ? 'text-blue-600' : 'text-gray-400'}`}>
+                                            {netVal > 0 ? `₹${netVal.toLocaleString('en-IN')}` : '-'}
                                         </td>
                                     </tr>
                                 );
@@ -145,15 +147,18 @@ const Dashboard = () => {
 
                             {/* Grand Total Row */}
                             <tr className="bg-gray-50 font-bold border-t-2 border-gray-200">
-                                <td className="px-4 py-3">Total</td>
+                                <td className="px-4 py-3 text-gray-800">TOTAL</td>
                                 <td className="px-4 py-3 text-center text-green-700">
                                     {Object.values(data?.cashStats?.todayInward?.denominations || {}).reduce((a, b) => a + parseInt(b), 0)}
                                 </td>
                                 <td className="px-4 py-3 text-center text-red-700">
                                     {Object.values(data?.cashStats?.todayOutward?.denominations || {}).reduce((a, b) => a + parseInt(b), 0)}
                                 </td>
-                                <td className={`px-4 py-3 text-center ${((data?.cashStats?.todayInward?.total || 0) - (data?.cashStats?.todayOutward?.total || 0)) >= 0 ? 'text-blue-800' : 'text-red-700'}`}>
-                                    ₹{Math.abs((data?.cashStats?.todayInward?.total || 0) - (data?.cashStats?.todayOutward?.total || 0))} (Net Flow)
+                                <td className="px-4 py-3 text-center text-blue-700">
+                                    {data?.cashStats?.totalNotesCount || 0}
+                                </td>
+                                <td className="px-4 py-3 text-center text-blue-800">
+                                    ₹{(data?.cashStats?.totalCashInHand || 0).toLocaleString('en-IN')}
                                 </td>
                             </tr>
                         </tbody>
@@ -217,6 +222,20 @@ const Dashboard = () => {
                                             <span className="text-xs font-bold text-red-500 animate-pulse">Low Funds!</span>
                                         )}
                                     </div>
+                                    {/* Show note count table for cash accounts */}
+                                    {['cash', 'petty_cash'].includes(acc.type) && acc.denominations && Object.values(acc.denominations).some(v => parseInt(v) > 0) && (
+                                        <div className="mt-3 pt-3 border-t border-gray-200">
+                                            <p className="text-xs text-gray-500 font-semibold mb-1">Note Breakdown:</p>
+                                            <div className="grid grid-cols-3 gap-1 text-xs">
+                                                {[2000, 500, 200, 100, 50, 20, 10, 5, 2, 1].filter(n => parseInt(acc.denominations[n] || 0) > 0).map(note => (
+                                                    <div key={note} className="flex justify-between items-center bg-white border border-gray-100 px-2 py-0.5 rounded text-xs">
+                                                        <span className="text-gray-500">₹{note}</span>
+                                                        <span className="font-bold text-blue-600">×{acc.denominations[note]}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             ))
                         ) : (
@@ -225,7 +244,7 @@ const Dashboard = () => {
                     </div>
                 </div>
             </div>
-        </div >
+        </div>
     );
 };
 

@@ -59,8 +59,17 @@ async function applyUpdates() {
 
         // 6. Add created_by to transactions (for Admin Tracking)
         await pool.query(`
-            ALTER TABLE transactions 
-            ADD COLUMN IF NOT EXISTS created_by VARCHAR(50);
+            ALTER TABLE transactions ADD COLUMN IF NOT EXISTS created_by VARCHAR(50);
+        `);
+
+        // 7. Ensure denominations JSONB column in accounts (for cash note tracking)
+        await pool.query(`
+            ALTER TABLE accounts ADD COLUMN IF NOT EXISTS denominations JSONB DEFAULT '{}';
+        `);
+
+        // 8. Ensure initial_balance in accounts
+        await pool.query(`
+            ALTER TABLE accounts ADD COLUMN IF NOT EXISTS initial_balance DECIMAL(15, 2) DEFAULT 0.00;
         `);
 
         console.log('Database schema updated successfully.');
