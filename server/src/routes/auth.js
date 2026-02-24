@@ -13,19 +13,25 @@ router.post('/login', async (req, res) => {
     }
 
     try {
-        const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+        const lowerUsername = username.toLowerCase();
+        console.log(`Login attempt: ${lowerUsername}`);
+
+        const result = await pool.query('SELECT * FROM users WHERE LOWER(username) = $1', [lowerUsername]);
 
         if (result.rows.length === 0) {
-            return res.status(401).json({ message: 'Invalid login! Please enter correct username & password.' });
+            console.log(`User not found: ${lowerUsername}`);
+            return res.status(401).json({ message: 'Invalid login! User not found.' });
         }
 
         const user = result.rows[0];
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
-            return res.status(401).json({ message: 'Invalid login! Please enter correct username & password.' });
+            console.log(`Password mismatch for: ${lowerUsername}`);
+            return res.status(401).json({ message: 'Invalid login! Incorrect password.' });
         }
 
+        console.log(`Login success: ${lowerUsername}`);
         const token = jwt.sign(
             { id: user.id, username: user.username, role: user.role },
             process.env.JWT_SECRET,
