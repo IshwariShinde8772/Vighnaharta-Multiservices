@@ -62,13 +62,13 @@ const Reports = () => {
         fetchTransactions(emptyFilters);
     };
 
+    const [editingTransaction, setEditingTransaction] = useState(null);
+    const [editForm, setEditForm] = useState({});
+
     // Calculate Totals
     const totalAmount = transactions.reduce((sum, t) => sum + (parseFloat(t.total_amount) || parseFloat(t.amount) || 0), 0);
     const totalCharges = transactions.reduce((sum, t) => {
-        if (t.type === 'service_income') {
-            return sum + (parseFloat(t.service_charges) || 0);
-        }
-        return sum;
+        return sum + (parseFloat(t.service_charges) || 0);
     }, 0);
 
     const handleExport = () => {
@@ -82,7 +82,7 @@ const Reports = () => {
                 t.category || '-',
                 `"${t.client_name || '-'}"`,
                 t.total_amount || t.amount,
-                t.type === 'service_income' ? t.service_charges : 0,
+                t.service_charges || 0,
                 t.payment_mode,
                 t.created_by || '-',
                 t.status
@@ -99,6 +99,24 @@ const Reports = () => {
 
     const handlePrint = () => {
         window.print();
+    };
+
+    const handleEdit = (t) => {
+        setEditingTransaction(t);
+        setEditForm({ ...t });
+    };
+
+    const handleUpdate = async (e) => {
+        e.preventDefault();
+        try {
+            await axios.put(`/api/transactions/${editingTransaction.id}`, editForm);
+            alert("Transaction updated successfully!");
+            setEditingTransaction(null);
+            fetchTransactions();
+        } catch (err) {
+            console.error(err);
+            alert("Failed to update transaction");
+        }
     };
 
     const handleDeleteHistory = async () => {
@@ -259,9 +277,9 @@ const Reports = () => {
                                 <th className="px-6 py-3">Client</th>
                                 <th className="px-6 py-3">Status</th>
                                 <th className="px-6 py-3">Payment</th>
-                                <th className="px-6 py-3">Admin</th>
                                 <th className="px-6 py-3 text-right">Total Amount</th>
                                 <th className="px-6 py-3 text-right">Charges</th>
+                                <th className="px-6 py-3 no-print">Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -297,12 +315,19 @@ const Reports = () => {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 capitalize">{t.payment_mode}</td>
-                                        <td className="px-6 py-4 capitalize text-gray-600">{t.created_by || '-'}</td>
                                         <td className="px-6 py-4 text-right font-bold">
                                             ₹{t.total_amount || t.amount}
                                         </td>
                                         <td className="px-6 py-4 text-right text-gray-500">
-                                            {t.type === 'service_income' ? `₹${t.service_charges}` : '-'}
+                                            {t.service_charges > 0 ? `₹${t.service_charges}` : '-'}
+                                        </td>
+                                        <td className="px-6 py-4 no-print">
+                                            <button
+                                                onClick={() => handleEdit(t)}
+                                                className="text-blue-600 hover:text-blue-900 font-medium"
+                                            >
+                                                Edit
+                                            </button>
                                         </td>
                                     </tr>
                                 ))
@@ -310,14 +335,112 @@ const Reports = () => {
                         </tbody>
                         <tfoot className="bg-gray-100 font-bold text-gray-900">
                             <tr>
-                                <td colSpan="7" className="px-6 py-4 text-right">Total:</td>
+                                <td colSpan="6" className="px-6 py-4 text-right">Total:</td>
                                 <td className="px-6 py-4 text-right">₹{totalAmount.toFixed(2)}</td>
                                 <td className="px-6 py-4 text-right">₹{totalCharges.toFixed(2)}</td>
+                                <td></td>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
             </div>
+
+            {/* Edit Modal */}
+            {editingTransaction && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 no-print">
+                    <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="p-6 border-b flex justify-between items-center">
+                            <h2 className="text-xl font-bold text-gray-800">Edit Transaction</h2>
+                            <button onClick={() => setEditingTransaction(null)} className="text-gray-500 hover:text-gray-700">✕</button>
+                        </div>
+                        <form onSubmit={handleUpdate} className="p-6 space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Client Name</label>
+                                    <input
+                                        type="text"
+                                        className="mt-1 block w-full p-2 border rounded-md"
+                                        value={editForm.client_name || ''}
+                                        onChange={e => setEditForm({ ...editForm, client_name: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Client Phone</label>
+                                    <input
+                                        type="text"
+                                        className="mt-1 block w-full p-2 border rounded-md"
+                                        value={editForm.client_phone || ''}
+                                        onChange={e => setEditForm({ ...editForm, client_phone: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Base Amount (₹)</label>
+                                    <input
+                                        type="number"
+                                        className="mt-1 block w-full p-2 border rounded-md"
+                                        value={editForm.amount || 0}
+                                        onChange={e => setEditForm({ ...editForm, amount: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Service Charges (₹)</label>
+                                    <input
+                                        type="number"
+                                        className="mt-1 block w-full p-2 border rounded-md"
+                                        value={editForm.service_charges || 0}
+                                        onChange={e => setEditForm({ ...editForm, service_charges: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Total Amount (₹)</label>
+                                    <input
+                                        type="number"
+                                        className="mt-1 block w-full p-2 border rounded-md"
+                                        value={editForm.total_amount || 0}
+                                        onChange={e => setEditForm({ ...editForm, total_amount: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Status</label>
+                                    <select
+                                        className="mt-1 block w-full p-2 border rounded-md"
+                                        value={editForm.status || 'pending'}
+                                        onChange={e => setEditForm({ ...editForm, status: e.target.value })}
+                                    >
+                                        <option value="pending">Pending</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="urgent">Urgent</option>
+                                    </select>
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700">Description</label>
+                                    <textarea
+                                        className="mt-1 block w-full p-2 border rounded-md"
+                                        rows="2"
+                                        value={editForm.description || ''}
+                                        onChange={e => setEditForm({ ...editForm, description: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex justify-end space-x-3 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setEditingTransaction(null)}
+                                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                >
+                                    Update Transaction
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

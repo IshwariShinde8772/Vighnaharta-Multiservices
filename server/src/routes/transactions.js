@@ -280,6 +280,54 @@ router.post('/', async (req, res) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// PUT /api/transactions/:id — update transaction details
+// ─────────────────────────────────────────────────────────────────────────────
+router.put('/:id', async (req, res) => {
+    const { id } = req.params;
+    const {
+        client_name,
+        client_phone,
+        description,
+        status,
+        category,
+        payment_mode,
+        amount,
+        service_charges,
+        total_amount
+    } = req.body;
+
+    try {
+        // We allow updating basic fields. 
+        // Note: For a production app, updating 'amount' should ideally trigger balance adjustments,
+        // but for now, we'll update the record as requested by the admin.
+        const result = await pool.query(
+            `UPDATE transactions 
+             SET client_name = $1, 
+                 client_phone = $2, 
+                 description = $3, 
+                 status = $4, 
+                 category = $5, 
+                 payment_mode = $6,
+                 amount = $7,
+                 service_charges = $8,
+                 total_amount = $9
+             WHERE id = $10 
+             RETURNING *`,
+            [client_name, client_phone, description, status, category, payment_mode, amount, service_charges, total_amount, id]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'Transaction not found' });
+        }
+
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // PUT /api/transactions/:id/status — mark as done
 // ─────────────────────────────────────────────────────────────────────────────
 router.put('/:id/status', async (req, res) => {

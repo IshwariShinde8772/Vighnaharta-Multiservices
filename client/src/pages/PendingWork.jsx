@@ -1,18 +1,19 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Search, CheckCircle, Clock, Eye, X } from 'lucide-react';
+import { Search, CheckCircle, Clock, Eye, X, Edit2 } from 'lucide-react';
 
 const PendingWork = () => {
     const [pendingItems, setPendingItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedWork, setSelectedWork] = useState(null); // For Modal
+    const [selectedWork, setSelectedWork] = useState(null); // For View Modal
+    const [editingTransaction, setEditingTransaction] = useState(null); // For Edit Modal
+    const [editForm, setEditForm] = useState({});
 
     const fetchPendingWork = async () => {
         setLoading(true);
         try {
-            // Get all transactions first (refined API could filter by status=pending)
-            // For now, fetching all and filtering client side as per previous pattern, or use query param types
+            // Get all transactions
             const res = await axios.get('/api/transactions');
             // Filter where status is 'pending'
             const pending = res.data.filter(t => t.status === 'pending');
@@ -36,6 +37,24 @@ const PendingWork = () => {
             if (selectedWork?.id === id) setSelectedWork(null); // Close modal if open
         } catch (err) {
             alert('Failed to update status');
+        }
+    };
+
+    const handleEdit = (item) => {
+        setEditingTransaction(item);
+        setEditForm({ ...item });
+    };
+
+    const handleUpdate = async (e) => {
+        e.preventDefault();
+        try {
+            await axios.put(`/api/transactions/${editingTransaction.id}`, editForm);
+            alert("Transaction updated successfully!");
+            setEditingTransaction(null);
+            fetchPendingWork();
+        } catch (err) {
+            console.error(err);
+            alert("Failed to update transaction");
         }
     };
 
@@ -103,12 +122,21 @@ const PendingWork = () => {
                                             <button
                                                 onClick={() => setSelectedWork(item)}
                                                 className="text-blue-600 hover:text-blue-900 bg-blue-50 px-3 py-1 rounded-md"
+                                                title="View Details"
                                             >
                                                 View
                                             </button>
                                             <button
+                                                onClick={() => handleEdit(item)}
+                                                className="text-amber-600 hover:text-amber-900 bg-amber-50 px-3 py-1 rounded-md flex items-center inline-flex"
+                                                title="Edit Details"
+                                            >
+                                                <Edit2 size={14} className="mr-1" /> Edit
+                                            </button>
+                                            <button
                                                 onClick={() => handleMarkDone(item.id)}
                                                 className="text-green-600 hover:text-green-900 bg-green-50 px-3 py-1 rounded-md flex items-center inline-flex"
+                                                title="Mark as Completed"
                                             >
                                                 <CheckCircle size={14} className="mr-1" /> Done
                                             </button>
@@ -131,9 +159,22 @@ const PendingWork = () => {
                     <div className="bg-white rounded-xl shadow-xl w-full max-w-lg relative overflow-hidden">
                         <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
                             <h3 className="text-lg font-bold text-gray-800">Work Details</h3>
-                            <button onClick={() => setSelectedWork(null)} className="text-gray-400 hover:text-gray-600">
-                                <X size={20} />
-                            </button>
+                            <div className="flex items-center space-x-2">
+                                <button
+                                    onClick={() => {
+                                        const work = selectedWork;
+                                        setSelectedWork(null);
+                                        handleEdit(work);
+                                    }}
+                                    className="text-amber-600 hover:text-amber-700 p-1"
+                                    title="Edit this work"
+                                >
+                                    <Edit2 size={20} />
+                                </button>
+                                <button onClick={() => setSelectedWork(null)} className="text-gray-400 hover:text-gray-600 p-1">
+                                    <X size={24} />
+                                </button>
+                            </div>
                         </div>
                         <div className="p-6 space-y-4">
                             <div className="grid grid-cols-2 gap-4">
@@ -191,8 +232,105 @@ const PendingWork = () => {
                     </div>
                 </div>
             )}
+
+            {/* Edit Modal */}
+            {editingTransaction && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="p-6 border-b flex justify-between items-center">
+                            <h2 className="text-xl font-bold text-gray-800">Edit Pending Work</h2>
+                            <button onClick={() => setEditingTransaction(null)} className="text-gray-500 hover:text-gray-700">✕</button>
+                        </div>
+                        <form onSubmit={handleUpdate} className="p-6 space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Client Name</label>
+                                    <input
+                                        type="text"
+                                        className="mt-1 block w-full p-2 border rounded-md"
+                                        value={editForm.client_name || ''}
+                                        onChange={e => setEditForm({ ...editForm, client_name: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Client Phone</label>
+                                    <input
+                                        type="text"
+                                        className="mt-1 block w-full p-2 border rounded-md"
+                                        value={editForm.client_phone || ''}
+                                        onChange={e => setEditForm({ ...editForm, client_phone: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Base Amount (₹)</label>
+                                    <input
+                                        type="number"
+                                        className="mt-1 block w-full p-2 border rounded-md"
+                                        value={editForm.amount || 0}
+                                        onChange={e => setEditForm({ ...editForm, amount: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Service Charges (₹)</label>
+                                    <input
+                                        type="number"
+                                        className="mt-1 block w-full p-2 border rounded-md"
+                                        value={editForm.service_charges || 0}
+                                        onChange={e => setEditForm({ ...editForm, service_charges: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Total Amount (₹)</label>
+                                    <input
+                                        type="number"
+                                        className="mt-1 block w-full p-2 border rounded-md"
+                                        value={editForm.total_amount || 0}
+                                        onChange={e => setEditForm({ ...editForm, total_amount: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Status</label>
+                                    <select
+                                        className="mt-1 block w-full p-2 border rounded-md"
+                                        value={editForm.status || 'pending'}
+                                        onChange={e => setEditForm({ ...editForm, status: e.target.value })}
+                                    >
+                                        <option value="pending">Pending</option>
+                                        <option value="completed">Completed</option>
+                                    </select>
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700">Description</label>
+                                    <textarea
+                                        className="mt-1 block w-full p-2 border rounded-md"
+                                        rows="2"
+                                        value={editForm.description || ''}
+                                        onChange={e => setEditForm({ ...editForm, description: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex justify-end space-x-3 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setEditingTransaction(null)}
+                                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                >
+                                    Update Transaction
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
 
 export default PendingWork;
+
